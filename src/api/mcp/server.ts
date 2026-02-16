@@ -3,17 +3,6 @@ import { WebStandardStreamableHTTPServerTransport } from "@modelcontextprotocol/
 import { registerTools } from "./tools";
 
 /**
- * MCP Server instance — configured once, reused across requests.
- */
-const mcpServer = new McpServer({
-  name: "caro-mcp-server",
-  version: "1.0.0",
-});
-
-// Register all tools
-registerTools(mcpServer);
-
-/**
  * Map of sessionId -> transport for stateful session management.
  * Each session gets its own transport to maintain state.
  */
@@ -35,7 +24,14 @@ export async function handleMcpRequest(req: Request): Promise<Response> {
       : body.method === "initialize";
 
     if (isInitialize && !sessionId) {
-      // New session - create a new transport
+      // New session - create a new server and transport
+      const server = new McpServer({
+        name: "caro-mcp-server",
+        version: "1.0.0",
+      });
+
+      registerTools(server);
+
       const transport = new WebStandardStreamableHTTPServerTransport({
         sessionIdGenerator: () => crypto.randomUUID(),
         onsessioninitialized: (id) => {
@@ -48,7 +44,7 @@ export async function handleMcpRequest(req: Request): Promise<Response> {
         },
       });
 
-      await mcpServer.connect(transport);
+      await server.connect(transport);
 
       // Re-create the request since we already consumed the body
       const newReq = new Request(req.url, {
