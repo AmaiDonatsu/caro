@@ -1,55 +1,84 @@
-# Etapa de planeación
+# Etapa de Planeación
 
-Este proyecto busca hacer un asistente de IA especializado para automatizar la cadena lógistica de las importaciones y exportaciones en el comercio internacional.
+Este proyecto busca hacer un asistente de IA especializado para automatizar la cadena logística de las importaciones y exportaciones en el comercio internacional.
 
-## 1.0 Features planeadas
+## 1.0 Features Planeadas
 
 Las features están basadas en mi proyecto final de la universidad cuando estudiaba la carrera de Comercio internacional.
 
 Mi proyecto final consistió en hacer de forma manual todo el proceso para importar un producto, desde la elección del producto, buscar el proovedor, planear la ruta, llenar papeleo, etc.
 
-### 1.1 Pasos de la cadena logística (Tool 2.6):
+### 1.1 Pasos de la Cadena Logística con Capacidad de Rectificación **[Tool 2.6]**
 
-#### 1.1.1 Busqueda de proveedor
+El asistente no ejecutará esto linealmente, sino que tratará cada fase como un módulo que puede reiniciar si las condiciones cambian.
 
-- **1.1.1.1** Buscar los mejores provedores del producto solicitado (Tool 2.1)
-- **1.1.1.2** Comparar precios y condiciones
-- **1.1.1.3** Hacer un top Desdendente de los mejores candidatos
-- **1.1.1.4** Contactar Con los proveedores, desde el primer puesto hacía abajo hasta recibir respuesta de alguno. (Tool 2.2, 2.3, 2.4)
+---
 
-#### 1.1.2 Recopilar información logistica y burocrática
+### Fase A: Selección y Validación Comercial
 
-- **1.1.2.1** Analizar información del usuario y su organización, empresa o negocio independiente.
-- **1.1.2.2** Buscar información de transportistas. (Tool 2.1)
-- **1.1.2.3** Buscar información y situación de Fiscal de los países y ciudades de ambas partes (2.1).
-- **1.1.2.4** Consultar con el usuario de ser necesario (Tool 2.2, 2.3, 2.4).
+#### 1.1.1 Búsqueda y Filtrado de Proveedores
 
-#### 1.1.3 Realizar Negociación
+- **1.1.1.1** Buscar los mejores proveedores del producto solicitado **[Tool 2.1]**.
+- **1.1.1.2** Comparar precios y condiciones iniciales.
+- **1.1.1.3** Hacer un Top Descendente de candidatos (Candidato A, B, C...).
+- **1.1.1.4** Contactar escalonadamente **[Tool 2.2, 2.3, 2.4]**.
+  > [!NOTE]
+  > Se contacta al Candidato A. Si no hay respuesta en X tiempo, se pasa al B.
 
-- **1.1.3.1** Cotizar con el proveedor seleccionado. (Tool 2.2, 2.3, 2.4)
-- **1.1.3.2** Negociar precios y condiciones. (Tool 2.2, 2.3, 2.4)
-- **1.1.3.3** En base a la información recopilada en el paso 1.1.2, se le presentará al usuario un resumen de la situación actual y se le pedirá su aprobación para continuar, recomendando los mejores terminos y los incoterms (Tool 2.2, 2.3, 2.4, 2.5).
+#### 1.1.2 Inteligencia Logística Preliminar (Pre-Validación)
 
-#### 1.1.4 Enviar informes al usuario y esperar aprovación 1 (Tool 2.2, 2.3, 2.4)
+- **1.1.2.1** Analizar restricciones del Usuario (Presupuesto, tiempos, ubicación).
+- **1.1.2.2** Buscar situación fiscal/legal de origen (país del proveedor) y destino **[Tool 2.1]**.
 
-#### 1.1.5 Planear ruta logistica.
+#### 1.1.3 Negociación y [Nodo de Decisión: Incoterms]
 
-- **1.1.5.1** Analizar el punto de salida y buscar el punto mejor de llegada si no está 100% definido por el usuario (Tool 2.5).
-- **1.1.5.2** Buscar las rutas y los puntos intermedios (la ruta es a partir del punto puesto por el incoterm) (Tool 2.5).
-- **1.1.5.3** Enlistar todas las rutas y medios de transporte a usar (Tool 2.5).
+- **1.1.3.1** Cotizar formalmente con el proveedor activo.
+- **1.1.3.2** Evaluación de Incoterms: El agente analiza qué responsabilidad logística implica la oferta del proveedor.
+  > [!TIP]
+  > **Ejemplo:** El proveedor exige Ex Works (recoger en fábrica), pero el usuario necesita entrega en frontera.
+- **1.1.3.3 [Bucle de Rectificación 1]: Viabilidad Comercial**
+  - Si el Incoterm es desfavorable: El agente intenta re-negociar para cambiar el término (ej. pasar de EXW a FCA).
+  - Si el proveedor es inflexible: El agente calcula el costo estimado de asumir esa logística extra.
+  - **Acción de Retroceso:** Si `Costo Logístico Extra + Precio Producto > Presupuesto`, el agente descarta al proveedor actual y regresa automáticamente al paso **1.1.1.4** para contactar al siguiente candidato del Top.
+- **1.1.3.4** Presentar resumen al usuario solo cuando la viabilidad esté confirmada y pedir aprobación inicial.
 
-#### 1.1.6 Contactar y negociar con transportistas.
+---
 
-- **1.1.6.1** Tomar en cuenta **1.1.5** y hacer un proceso de busqueda y negocación similar a **1.1.1** hasta **1.1.3** pero enfocado a cada medio de transporte y en precios de transporte.
-- **1.1.6.2** Realizar ajustes despues de cada negociación y despues de toda la fase.
+### Fase B: Ingeniería Logística y Adaptación
 
-#### 1.1.7 Enviar informes al usuario y esperar aprovación 2 (Tool 2.2, 2.3, 2.4)
+#### 1.1.5 Planeación de Ruta Dinámica
+
+- **1.1.5.1** Definir puntos exactos de transferencia de responsabilidad (basado en el Incoterm acordado en **1.1.3**).
+- **1.1.5.2** Generación de Escenarios **[Tool 2.5]**: El agente crea Rutas Primarias y Rutas Alternativas (Plan B y C).
+  - **Ruta A:** Marítima (más lenta, barata).
+  - **Ruta B:** Terrestre/Aérea (rápida, cara).
+
+#### 1.1.6 Negociación Logística y [Nodo de Decisión: Transporte]
+
+- **1.1.6.1** Contactar transportistas para la Ruta Primaria.
+- **1.1.6.2 [Bucle de Rectificación 2]: Viabilidad Operativa**
+  - **Escenario:** El transportista informa que la ruta es imposible (ej. carreteras bloqueadas, no entran a la zona del proveedor).
+  - **Acción de Improvisación:** El agente activa inmediatamente la Ruta Alternativa (definida en **1.1.5.2**) y contacta nuevos transportistas.
+  - **Acción de Retroceso Crítico:** Si todas las rutas son inviables o excesivamente caras con el proveedor actual, el agente regresa al paso **1.1.3** para renegociar el Incoterm (pedir que el proveedor acerque la mercancía a un punto más seguro) o incluso al **1.1.1.4** (cambiar de proveedor).
+
+---
+
+### Fase C: Consolidación y Ejecución
+
+#### 1.1.7 Consolidación del Plan
+
+- **1.1.7.1** Integrar Proveedor + Incoterm + Ruta Validada + Transportista Confirmado en el documento maestro **[Tool 2.6]**.
+- **1.1.7.2** Enviar informe final "A prueba de fallos" al usuario y esperar aprobación final.
+
+---
 
 ## 2.0 Tools Internas
 
-- 2.1 Busqueda y navegación web
-- 2.2 Mensajería Email.
-- 2.3 Mensajería sms.
-- 2.4 Llamadas telefónicas.
-- 2.5 Constructor de rutas.
-- 2.6 Crear y llenar documento todo
+| ID      | Herramienta           | Descripción                                        |
+| :------ | :-------------------- | :------------------------------------------------- |
+| **2.1** | Búsqueda y Navegación | Búsqueda y navegación web profunda.                |
+| **2.2** | Email                 | Mensajería vía Correo Electrónico.                 |
+| **2.3** | SMS                   | Mensajería vía SMS.                                |
+| **2.4** | Llamadas              | Llamadas telefónicas automatizadas.                |
+| **2.5** | Rutas                 | Constructor y optimizador de rutas logísticas.     |
+| **2.6** | Documentación         | Crear y llenar documentos maestros de seguimiento. |
