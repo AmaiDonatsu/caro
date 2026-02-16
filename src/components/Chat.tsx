@@ -1,12 +1,15 @@
 import { useState, useRef, useEffect } from "react";
 import BubbleMessage from "./BubbleMessage";
+import { ChatWebSocket } from "../client/websocket";
 
 const Chat = () => {
   const [messages, setMessages] = useState([
     { role: "assistant", content: "Hola! Soy Caro, tu asistente virtual. ¿En qué puedo ayudarte hoy?" },
   ]);
   const [input, setInput] = useState("");
+  const [status, setStatus] = useState<"connected" | "disconnected" | "connecting">("disconnected");
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const wsRef = useRef<ChatWebSocket | null>(null);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -16,31 +19,52 @@ const Chat = () => {
     scrollToBottom();
   }, [messages]);
 
+  useEffect(() => {
+    // Initialize WebSocket connection
+    const ws = new ChatWebSocket(
+      "ws://localhost:3000/api/chat",
+      (message) => {
+        setMessages((prev) => [...prev, message]);
+      },
+      (newStatus) => {
+          setStatus(newStatus);
+      }
+    );
+    ws.connect();
+    wsRef.current = ws;
+
+    return () => {
+      ws.close();
+    };
+  }, []);
+
   const handleSend = () => {
     if (!input.trim()) return;
 
     const userMessage = { role: "user", content: input };
     setMessages((prev) => [...prev, userMessage]);
+    
+    if (wsRef.current) {
+        wsRef.current.sendMessage(input);
+    }
+    
     setInput("");
-
-    // Simulate assistant response
-    setTimeout(() => {
-      setMessages((prev) => [
-        ...prev,
-        { role: "assistant", content: "Entiendo perfectamente. Déjame procesar esa información por ti..." },
-      ]);
-    }, 1000);
   };
 
   return (
     <div className="flex flex-col h-[600px] w-full max-w-2xl mx-auto bg-gray-900/50 backdrop-blur-xl border border-white/10 rounded-3xl overflow-hidden shadow-2xl">
       {/* Header */}
-      <div className="p-6 border-b border-white/10 bg-white/5">
-        <h2 className="text-xl font-semibold text-white flex items-center gap-2">
-          <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
-          Caro AI
-        </h2>
-        <p className="text-sm text-gray-400">Siempre activa para ayudarte</p>
+      <div className="p-6 border-b border-white/10 bg-white/5 flex justify-between items-center">
+        <div>
+            <h2 className="text-xl font-semibold text-white flex items-center gap-2">
+            <span className={`w-2 h-2 rounded-full ${status === 'connected' ? 'bg-green-500 animate-pulse' : 'bg-red-500'}`}></span>
+            Caro AI
+            </h2>
+            <p className="text-sm text-gray-400">Siempre activa para ayudarte</p>
+        </div>
+        <div className="text-xs text-gray-400 capitalize">
+            {status}
+        </div>
       </div>
 
       {/* Messages Area */}
@@ -61,10 +85,12 @@ const Chat = () => {
             onKeyDown={(e) => e.key === "Enter" && handleSend()}
             placeholder="Escribe un mensaje..."
             className="flex-1 bg-transparent border-none outline-none text-white px-4 py-2 placeholder:text-gray-500"
+            disabled={status !== 'connected'}
           />
           <button
             onClick={handleSend}
-            className="bg-blue-600 hover:bg-blue-500 text-white p-2 px-6 rounded-xl font-medium transition-all active:scale-95 shadow-lg shadow-blue-600/20"
+            disabled={status !== 'connected'}
+            className="bg-blue-600 hover:bg-blue-500 disabled:bg-gray-600 text-white p-2 px-6 rounded-xl font-medium transition-all active:scale-95 shadow-lg shadow-blue-600/20"
           >
             Enviar
           </button>

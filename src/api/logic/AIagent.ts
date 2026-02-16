@@ -8,7 +8,7 @@ import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/
 type ModelProvider = "google" | "anthropic";
 
 const MODELS = {
-  google: google("gemini-2.0-flash"),
+  google: google("gemini-3-pro-preview"),
   anthropic: anthropic("claude-sonnet-4-20250514"),
 } as const;
 
