@@ -9,7 +9,12 @@
     "build": "bun run build.ts"
   },
   "dependencies": {
+    "@ai-sdk/anthropic": "^3.0.44",
+    "@ai-sdk/google": "^3.0.29",
+    "@ai-sdk/openai": "^3.0.29",
+    "@modelcontextprotocol/sdk": "^1.26.0",
     "@reduxjs/toolkit": "^2.11.2",
+    "ai": "^6.0.86",
     "axios": "^1.13.5",
     "bun-plugin-tailwind": "^0.1.2",
     "react": "^19",
