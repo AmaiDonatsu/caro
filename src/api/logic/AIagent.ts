@@ -18,35 +18,6 @@ const MODELS = {
 const MCP_SERVER_URL = "http://localhost:3000/mcp";
 
 /**
- * Creates an MCP client connected to the local MCP server.
- * Returns the client and a cleanup function.
- */
-async function createMcpClient(): Promise<{
-  client: Client;
-  close: () => Promise<void>;
-}> {
-  const transport = new StreamableHTTPClientTransport(
-    new URL(MCP_SERVER_URL)
-  );
-
-  const client = new Client({
-    name: "caro-ai-agent",
-    version: "1.0.0",
-  });
-
-  await client.connect(transport);
-  console.log("[AI Agent] Connected to MCP server");
-
-  return {
-    client,
-    close: async () => {
-      await client.close();
-      console.log("[AI Agent] Disconnected from MCP server");
-    },
-  };
-}
-
-/**
  * Discovers tools from the MCP server and converts them
  * to Vercel AI SDK tool format for use with generateText.
  */
@@ -60,7 +31,6 @@ async function getMcpToolsAsAiTools(mcpClient: Client) {
   const aiTools: Record<string, ReturnType<typeof tool>> = {};
 
   for (const mcpTool of mcpTools) {
-    // Build a zod schema from the MCP tool's inputSchema
     const inputSchema = mcpTool.inputSchema;
     let zodSchema: z.ZodTypeAny = z.object({});
 
@@ -86,7 +56,6 @@ async function getMcpToolsAsAiTools(mcpClient: Client) {
         if (prop.description) {
           fieldSchema = fieldSchema.describe(prop.description);
         }
-        // Check if the field is required
         const required = inputSchema.required as string[] | undefined;
         if (!required || !required.includes(key)) {
           fieldSchema = fieldSchema.optional();
@@ -117,19 +86,47 @@ async function getMcpToolsAsAiTools(mcpClient: Client) {
 
 export class AIagent {
   private model: ModelProvider;
+  private mcpClient: Client | null = null;
+  private cachedTools: Record<string, ReturnType<typeof tool>> | null = null;
 
   constructor(model: ModelProvider = "google") {
     this.model = model;
   }
 
   /**
+   * Lazily connects to the MCP server and caches the client + tools.
+   * Reuses the existing connection if already connected.
+   */
+  private async ensureConnected(): Promise<Record<string, ReturnType<typeof tool>>> {
+    if (this.mcpClient && this.cachedTools) {
+      return this.cachedTools;
+    }
+
+    console.log("[AI Agent] Establishing persistent MCP connection...");
+
+    const transport = new StreamableHTTPClientTransport(
+      new URL(MCP_SERVER_URL)
+    );
+
+    this.mcpClient = new Client({
+      name: "caro-ai-agent",
+      version: "1.0.0",
+    });
+
+    await this.mcpClient.connect(transport);
+    console.log("[AI Agent] Connected to MCP server (persistent)");
+
+    this.cachedTools = await getMcpToolsAsAiTools(this.mcpClient);
+    return this.cachedTools;
+  }
+
+  /**
    * Execute a prompt using the AI model with MCP tools available.
+   * Reuses the persistent MCP connection.
    */
   async execute(prompt: string): Promise<string> {
-    const { client, close } = await createMcpClient();
-
     try {
-      const mcpTools = await getMcpToolsAsAiTools(client);
+      const mcpTools = await this.ensureConnected();
 
       const result = await generateText({
         model: MODELS[this.model],
@@ -144,10 +141,26 @@ export class AIagent {
       });
 
       return result.text || "[No text response]";
-    } finally {
-      await close();
+    } catch (error) {
+      // If connection failed, reset state so next call retries
+      console.error("[AI Agent] Error during execution, resetting connection:", error);
+      await this.close();
+      throw error;
+    }
+  }
+
+  /**
+   * Explicitly close the MCP connection (for cleanup).
+   */
+  async close(): Promise<void> {
+    if (this.mcpClient) {
+      await this.mcpClient.close();
+      console.log("[AI Agent] Disconnected from MCP server");
+      this.mcpClient = null;
+      this.cachedTools = null;
     }
   }
 }
 
 export const aiAgent = new AIagent();
+
