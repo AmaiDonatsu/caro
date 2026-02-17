@@ -82,3 +82,77 @@ El asistente no ejecutará esto linealmente, sino que tratará cada fase como un
 | **2.4** | Llamadas              | Llamadas telefónicas automatizadas.                |
 | **2.5** | Rutas                 | Constructor y optimizador de rutas logísticas.     |
 | **2.6** | Documentación         | Crear y llenar documentos maestros de seguimiento. |
+
+## 3.0 Busqueda y Navegación.
+
+### 3.1 Resumen Arch de Busqueda y navegación.
+
+La Tool tiene como objetivo ser una interfaz del motor de búsqueda, mostrando los datos estructurados al agente como si se los mostrara a una persona, pero optimizada para AI.
+
+### 3.2 Componentes
+
+#### 3.2.1 entrada de busqueda.
+
+Entrada de búsqueda directa al motor de búsqueda.
+
+#### 3.2.2 Pantalla de resultados.
+
+Resultados de las búsquedas estructurado e interactuable para profundizar en los resultados.
+
+- 3.2.2.1 **Estructura de los resultados (a modo de fichero)**
+
+```yaml
+result:
+  - id: "1"
+  - title: "Titulo del resultado"
+  - resume: "Resumen del resultado"
+  - seo: "palabras clave"
+  - url: "http://result.com"
+
+result:
+  - id: "2"
+  - title: "Titulo del resultado"
+  - resume: "Resumen del resultado"
+  - seo: "palabras clave"
+  - url: "http://result.com"
+```
+
+- 3.2.2.2 **al dar "click" en un resultado**
+
+```json
+{
+  {
+    "id":"123",
+    "component": "text",
+    "content": ""
+  },
+
+  {
+    "id": "adfw",
+    "component": "route",
+    "to": "http://route",
+    "method": "GET",
+    "params": {
+      "id": "123"
+    }
+  },
+  {
+    "id": "adc",
+    "component": "component",
+    structure:[
+      {
+        "id": "qwef",
+        "component": "text",
+        "content": ""
+      },
+      {
+        "id": "qwef",
+        "component": "text",
+        "content": ""
+      }
+    ]
+  }
+}
+```
+
+- 3.2.2.3 [Documentación del Navegador](myelina-browser.md)
